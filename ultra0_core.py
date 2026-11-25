@@ -184,8 +184,16 @@ def ensure_module_apk():
 # ---------- Google One 启动（原 462-467 行）----------
 def launch_app() -> int:
     sh("shell", f"am force-stop {PKG}")
+    time.sleep(1)
+    # monkey 在部分镜像上静默失效，退回显式 Activity 启动
+    sh("shell", f"am start -n {PKG}/.LauncherActivity")
+    for _ in range(12):
+        time.sleep(2)
+        pid = sh("shell", f"pidof {PKG}")
+        if pid.strip().isdigit():
+            return int(pid)
     sh("shell", f"monkey -p {PKG} -c android.intent.category.LAUNCHER 1")
-    time.sleep(7)
+    time.sleep(5)
     pid = sh("shell", f"pidof {PKG}")
     return int(pid) if pid.strip().isdigit() else 0
 
